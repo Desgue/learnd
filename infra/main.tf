@@ -18,6 +18,7 @@ provider "aws" {
   secret_key = var.AWS_SECRET_ACCESS_KEY
 }
 
+# S3 MODULE
 module "s3_documents_storage" {
   source = "./modules/s3"
 
@@ -27,6 +28,7 @@ module "s3_documents_storage" {
   environment       = var.environment
 }
 
+# DYNAMODB MODULE
 module "dynamodb_documents_metadata" {
   source = "./modules/dynamodb"
 
@@ -40,16 +42,18 @@ module "dynamodb_documents_metadata" {
   global_secondary_indexes = []
 }
 
-data "archive_file" "document_processor_lambda" {
-  type        = "zip"
-  source_file = "${path.module}/../lambda/DocumentProcessor/processor.py"
-  output_path = "document_processor_function_src.zip"
+# CONTAINER REGISTRY MODULE
+module "document_process_lambda_registry" {
+  source = "./modules/ecr"
+
+  repository_name = "document_processer"
 }
+
+# Lambda Function Triggered by S3
 module "documents_process_lambda" {
   source = "./modules/lambda"
 
-  filename         = data.archive_file.document_processor_lambda.output_path
-  source_code_hash = data.archive_file.document_processor_lambda.output_base64sha256
+  image_uri        = "${module.document_process_lambda_registry.repository_url}:latest"
   role_name        = "document_process_lambda_role"
   function_name    = "document_processor"
   runtime          = "python3.9"

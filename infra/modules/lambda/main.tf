@@ -22,12 +22,12 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 }
 
 resource "aws_lambda_function" "lambda" {
-  role             = aws_iam_role.iam_for_lambda.arn
-  filename         = var.filename
-  function_name    = var.function_name
-  source_code_hash = var.source_code_hash
-  runtime          = var.runtime
-  handler          = var.handler_function
+  role          = aws_iam_role.iam_for_lambda.arn
+  image_uri     = var.image_uri
+  package_type  = "Image"
+  function_name = var.function_name
+  runtime       = var.runtime
+  handler       = var.handler_function
   environment {
     variables = {
       env = var.environment
