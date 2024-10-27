@@ -107,7 +107,7 @@ Navigate to the `lambda/DocumentProcessor` directory and:
 1. Set required environment variables:
    ```bash
    export AWS_REGION="your-region"
-   export ECR_REPOSITORY="your-account-id.dkr.ecr.region.amazonaws.com/repository-name"
+   export ECR_REPOSITORY="your-account-id.dkr.ecr.region.amazonaws.com/namespace/repository-name"
    ```
 
 2. Build and push the Lambda container:
@@ -131,7 +131,7 @@ Navigate to the `lambda/DocumentProcessor` directory and:
    AWS_ACCESS_KEY_ID    = "your-access-key"
    AWS_SECRET_ACCESS_KEY = "your-secret-key"
    environment          = "dev"
-   ecr_namespace        = "your-account-id.dkr.ecr.region.amazonaws.com"
+   ecr_namespace        = "your-account-id.dkr.ecr.region.amazonaws.com/namespace"
    ```
 
 3. Initialize Terraform:
