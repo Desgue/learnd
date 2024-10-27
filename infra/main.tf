@@ -42,13 +42,6 @@ module "dynamodb_documents_metadata" {
   global_secondary_indexes = []
 }
 
-# CONTAINER REGISTRY MODULE
-module "document_process_lambda_registry" {
-  source = "./modules/ecr"
-
-  repository_name = "document_processer"
-}
-
 # Lambda Function Triggered by S3
 module "documents_process_lambda" {
   source = "./modules/lambda"
