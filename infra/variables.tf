@@ -13,3 +13,7 @@ variable "environment" {
   type        = string
   default     = "development"
 }
+variable "ecr_namespace" {
+  description = "ECR URI namespace for this current project"
+  type        = string
+}

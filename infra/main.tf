@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 5.0"
     }
 
   }
@@ -46,10 +46,10 @@ module "dynamodb_documents_metadata" {
 module "documents_process_lambda" {
   source = "./modules/lambda"
 
-  image_uri        = "${module.document_process_lambda_registry.repository_url}:latest"
+  image_uri        = "${var.ecr_namespace}/document_processor:latest"
   role_name        = "document_process_lambda_role"
   function_name    = "document_processor"
-  runtime          = "python3.9"
+  runtime          = "python3.12"
   handler_function = "processor.lambda_handler"
   environment      = var.environment
 }
