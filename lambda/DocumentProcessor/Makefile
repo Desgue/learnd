@@ -1,3 +1,5 @@
+CONTAINER_NAME ?= document_processor
+
 # Default target
 all: docker-auth build tag push
 
@@ -9,12 +11,12 @@ docker-auth:
 # Build the Docker image
 build:
 	@echo "Building Docker image..."
-	docker build -t document_processor .
+	docker build -t $(CONTAINER_NAME) .
 
 # Tag the Docker image
 tag:
 	@echo "Tagging Docker image..."
-	docker tag document_processor:latest $(ECR_REPOSITORY):latest
+	docker tag $(CONTAINER_NAME):latest $(ECR_REPOSITORY):latest
 
 # Push the image to ECR
 push:
@@ -24,5 +26,5 @@ push:
 # Clean up local Docker images (optional target)
 clean:
 	@echo "Cleaning up local Docker images..."
-	docker rmi document_processor:latest || true
+	docker rmi $(CONTAINER_NAME):latest || true
 	docker rmi $(ECR_REPOSITORY):latest || true
