@@ -1,148 +1,236 @@
-# S3 Bucket Infrastructure Documentation
+# Document Processing Infrastructure Documentation
 
 ## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Security Considerations](#security-considerations)
-- [Infrastructure Details](#infrastructure-details)
+1. [Overview](#overview)
+2. [Project Structure](#project-structure)
+3. [Prerequisites](#prerequisites)
+   - [Required Tools](#required-tools)
+   - [AWS Configuration](#aws-configuration)
+     - [Variable Handling in Terraform](#variable-handling-in-terraform)
+     - [Important Notes](#important-notes)
+4. [Setup Instructions](#setup-instructions)
+   - [Lambda Function Setup](#1-lambda-function-setup)
+   - [Terraform Configuration](#2-terraform-configuration)
+5. [Infrastructure Components](#infrastructure-components)
+   - [S3 Bucket](#s3-bucket)
+   - [DynamoDB Table](#dynamodb-table)
+   - [Lambda Function](#lambda-function)
+6. [Testing the Setup](#testing-the-setup)
+7. [Cleanup](#cleanup)
+8. [Security Considerations](#security-considerations)
+   - [Access Control](#1-access-control)
+   - [Data Protection](#2-data-protection)
+9. [Troubleshooting](#troubleshooting)
+   - [Lambda Container Issues](#1-lambda-container-issues)
+   - [Infrastructure Deployment](#2-infrastructure-deployment)
+   - [S3 Events](#3-s3-events)
+10. [Resource Links](#resource-links)
+
+## Overview
+This project sets up a serverless document processing infrastructure on AWS using Terraform. The system consists of:
+- An S3 bucket for document storage
+- A DynamoDB table for document metadata
+- A Lambda function that processes documents when they are uploaded/deleted from S3
+
+## Project Structure
+```
+.
+├── infra/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── modules/
+│       ├── s3/
+│       ├── dynamodb/
+│       └── lambda/
+├── lambda/
+│   └── DocumentProcessor/
+│       ├── Makefile
+│       ├── Dockerfile
+│       ├── processor.py
+│       └── requirements.txt
+```
 
 ## Prerequisites
 
-### Terraform Installation
-Before you can use this configuration, you need to have Terraform installed on your system:
+### Required Tools
+1. **AWS CLI** - [Installation Guide](https://aws.amazon.com/cli/)
+2. **Terraform** (version ~> 5.0) - [Installation Guide](https://developer.hashicorp.com/terraform/downloads)
+3. **Docker** - [Installation Guide](https://docs.docker.com/get-docker/)
 
-1. Visit the [official Terraform downloads page](https://developer.hashicorp.com/terraform/downloads)
-2. Download the appropriate version for your operating system
-3. Add Terraform to your system's PATH
-4. Verify installation by running:
-   ```bash
-   terraform --version
-   ```
+### AWS Configuration
 
-### AWS Credentials
-You'll need AWS credentials with appropriate permissions to create S3 buckets. Ensure you have:
-- AWS Access Key ID
-- AWS Secret Access Key
-- Appropriate IAM permissions to create and manage S3 buckets
+#### Variable Handling in Terraform
+Terraform provides multiple ways to set variables, which are read in the following order (later sources take precedence):
 
-
-## Configuration
-
-### 1. Environment Variables and Variable Handling
-
-Terraform provides multiple ways to set variables. They are read in the following order (later sources take precedence):
-
-1. **Environment Variables**: Set directly in your system
+1. **Environment Variables**:
    ```bash
    export TF_VAR_AWS_ACCESS_KEY_ID="your-access-key"
    export TF_VAR_AWS_SECRET_ACCESS_KEY="your-secret-key"
-   export TF_VAR_AWS_REGION="eu-west-2"
+   export TF_VAR_AWS_REGION="your-region"
+   export TF_VAR_environment="dev"
+   export TF_VAR_ecr_namespace="your-account-id.dkr.ecr.region.amazonaws.com"
    ```
 
-2. **Variable Files**: Create a `.tfvars` file (e.g., `terraform.tfvars`):
+2. **Variable Files**: Create a `terraform.tfvars` file:
    ```hcl
    AWS_ACCESS_KEY_ID     = "your-access-key"
    AWS_SECRET_ACCESS_KEY = "your-secret-key"
-   AWS_REGION           = "eu-west-2"  # Default is eu-west-2, change if needed
+   AWS_REGION           = "your-region"
+   environment          = "dev"
+   ecr_namespace        = "your-account-id.dkr.ecr.region.amazonaws.com"
    ```
 
 3. **Command Line Flags**:
    ```bash
-   terraform apply -var="AWS_REGION=eu-west-2"
+   terraform apply -var="AWS_REGION=eu-west-2" -var="environment=dev"
    ```
 
-4. **AWS CLI Configuration**: You can also use AWS CLI credentials:
+4. **AWS CLI Configuration** (Recommended for Development):
    ```bash
    aws configure
    ```
    This will create/update your AWS credentials file (~/.aws/credentials) which Terraform can use automatically.
 
-⚠️ **Important**: 
-- Never commit the `.tfvars` file to version control. Add it to `.gitignore`.
-- Using AWS CLI configuration is recommended for development environments.
-- For production environments, consider using AWS IAM roles and instance profiles instead of access keys.
+⚠️ **Important Notes**: 
+- Never commit credentials or `.tfvars` files to version control
+- Add `*.tfvars` to your `.gitignore`
+- For development environments, using AWS CLI configuration is recommended
+- For production environments, consider using AWS IAM roles and instance profiles
+- Environment variables with the prefix `TF_VAR_` are automatically loaded by Terraform
 
-### 2. Project Structure
-Ensure your project follows this structure:
-```
-.
-├── main.tf
-├── variables.tf
-├── outputs.tf
-├── terraform.tfvars
-└── modules/
-    └── s3/
-        ├── main.tf
-        ├── variables.tf
-        └── outputs.tf
-```
+## Setup Instructions
 
-## Usage
+### 1. Lambda Function Setup
+Navigate to the `lambda/DocumentProcessor` directory and:
 
-### 1. Initialize Terraform
-Run the following command to initialize Terraform and download required providers:
-```bash
-terraform init
-```
+1. Set required environment variables:
+   ```bash
+   export AWS_REGION="your-region"
+   export ECR_REPOSITORY="your-account-id.dkr.ecr.region.amazonaws.com/repository-name"
+   ```
 
-### 2. Plan the Infrastructure
-Review the changes that will be made:
-```bash
-terraform plan -var-file="terraform.tfvars"
-```
+2. Build and push the Lambda container:
+   ```bash
+   make all
+   ```
+   This will:
+   - Authenticate with AWS ECR
+   - Build the Docker image
+   - Tag the image
+   - Push it to ECR
 
-### 3. Apply the Configuration
-Create the infrastructure:
-```bash
-terraform apply -var-file="terraform.tfvars"
-```
 
-### 4. Destroy Infrastructure (if needed)
+### 2. Terraform Configuration
+
+1. Navigate to the `infra` directory
+
+2. Create a `terraform.tfvars` file:
+   ```hcl
+   AWS_REGION           = "your-region"
+   AWS_ACCESS_KEY_ID    = "your-access-key"
+   AWS_SECRET_ACCESS_KEY = "your-secret-key"
+   environment          = "dev"
+   ecr_namespace        = "your-account-id.dkr.ecr.region.amazonaws.com"
+   ```
+
+3. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
+
+4. Preview the changes:
+   ```bash
+   terraform plan
+   ```
+
+5. Apply the configuration:
+   ```bash
+   terraform apply
+   ```
+
+## Infrastructure Components
+
+### S3 Bucket
+- Name: "learnd-documents-bucket"
+- Features:
+  - Versioning enabled
+  - Server-side encryption (AES256)
+  - CORS configuration for GET, PUT, DELETE operations
+  - Force destroy enabled for easy cleanup
+
+### DynamoDB Table
+- Table Name: "Learnd_Documents_Metadata"
+- Primary Key: "ID" (String)
+- On-demand billing mode (PAY_PER_REQUEST)
+
+### Lambda Function
+- Name: "document_processor"
+- Runtime: Python 3.12
+- Trigger: S3 events (ObjectCreated, ObjectRemoved)
+- IAM Role: Basic Lambda execution permissions
+
+## Testing the Setup
+
+1. Upload a document to the S3 bucket:
+   ```bash
+   aws s3 cp test-document.pdf s3://learnd-documents-bucket/
+   ```
+
+2. Check Lambda logs:
+   ```bash
+   aws logs get-log-events --log-group-name /aws/lambda/document_processor --log-stream-name <latest-stream>
+   ```
+
+3. Verify metadata in DynamoDB:
+   ```bash
+   aws dynamodb scan --table-name Learnd_Documents_Metadata
+   ```
+
+## Cleanup
+
 To remove all created resources:
+
 ```bash
-terraform destroy -var-file="terraform.tfvars"
+terraform destroy
 ```
 
-## Infrastructure Details
-
-### S3 Bucket Configuration
-This Terraform configuration creates an S3 bucket with the following features:
-
-- **Bucket Name**: "learnd-pdf" (configured through the module)
-- **Versioning**: Enabled by default
-- **Force Destroy**: Enabled (allows deletion of bucket even if it contains objects)
-- **CORS Configuration**:
-  - Allowed Methods: PUT, GET, POST, DELETE
-  - Allowed Origins: * (all origins)
-  - Allowed Headers: * (all headers)
-  - Max Age: 3000 seconds
-  - Expose Headers: ETag
-- **Server-Side Encryption**: AES256 encryption enabled by default
-
-### Output Values
-After successful creation, you can access:
-- Bucket ARN: `terraform output bucket_arn`
-- Bucket ID: `terraform output bucket_id`
+Then clean up Docker images (optional):
+```bash
+cd lambda/DocumentProcessor
+make clean
+```
 
 ## Security Considerations
 
-1. **CORS Configuration**: The current configuration allows all origins (`*`). For production, restrict this to specific domains.
-2. **Encryption**: Server-side encryption is enabled using AES256.
-3. **Access Keys**: Always use environment variables or AWS profiles instead of hardcoding credentials.
-4. **Versioning**: Enabled by default for data protection and recovery.
+1. **Access Control**: 
+   - S3 bucket allows all origins (*) - restrict this for production
+   - Lambda has minimal IAM permissions
+   - DynamoDB uses on-demand pricing to prevent DOS attacks
+
+2. **Data Protection**:
+   - S3 bucket has versioning enabled
+   - Server-side encryption enabled by default
+   - CORS rules configured for specific HTTP methods
 
 ## Troubleshooting
 
-Common issues and solutions:
+1. **Lambda Container Issues**:
+   - Verify ECR repository exists
+   - Check Docker build logs
+   - Ensure AWS credentials are correct
 
-1. **Bucket Name Conflict**: S3 bucket names must be globally unique. If creation fails, try a different name.
-2. **Permission Issues**: Ensure your AWS credentials have sufficient permissions.
-3. **State Lock**: If you get a state lock error, check if another process is running or if a previous process failed to release the lock.
+2. **Infrastructure Deployment**:
+   - Verify AWS credentials
+   - Check Terraform state file
+   - Review CloudWatch logs for Lambda errors
 
-## Additional Resources
+3. **S3 Events**:
+   - Verify bucket notification configuration
+   - Check Lambda permissions
+   - Review CloudWatch logs for event triggers
 
-- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/index.html)
-- [Terraform Best Practices](https://www.terraform-best-practices.com/)
+## Resource Links
+- [AWS Lambda Container Images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [AWS S3 Event Notifications](https://docs.aws.amazon.com/AmazonS3/latest/userguide/NotificationHowTo.html)
