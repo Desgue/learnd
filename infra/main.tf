@@ -18,7 +18,6 @@ provider "aws" {
   secret_key = var.AWS_SECRET_ACCESS_KEY
 }
 
-
 module "s3_documents_storage" {
   source = "./modules/s3"
 
@@ -56,4 +55,22 @@ module "documents_process_lambda" {
   runtime          = "python3.9"
   handler_function = "lambda_handler"
   environment      = var.environment
+}
+
+// Add processor lambda trigger to documents bucket
+// TODO: add event for object updated?
+resource "aws_s3_bucket_notification" "lambda-processor-trigger" {
+  bucket = module.s3_documents_storage.bucket_id
+  lambda_function {
+    lambda_function_arn = module.documents_process_lambda.lambda_arn
+    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+  }
+  depends_on = [aws_lambda_permission.document_processor_permission]
+}
+resource "aws_lambda_permission" "document_processor_permission" {
+  statement_id  = "AllowS3Invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.documents_process_lambda.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = "arn:aws:s3:::${module.s3_documents_storage.bucket_id}"
 }
