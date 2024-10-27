@@ -53,5 +53,5 @@ module "documents_process_lambda" {
   role_name        = "document_process_lambda_role"
   function_name    = "document_processor"
   runtime          = "python3.9"
-  handler_function = "lamda_handler"
+  handler_function = "lambda_handler"
 }
