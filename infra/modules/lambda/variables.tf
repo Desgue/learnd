@@ -28,3 +28,7 @@ variable "handler_function" {
   type        = string
 }
 
+variable "environment" {
+  description = "Variable to define if its a production or development environment tag"
+  type        = string
+}

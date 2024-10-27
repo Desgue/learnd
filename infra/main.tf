@@ -25,6 +25,7 @@ module "s3_documents_storage" {
   bucket_name       = "learnd-documents-bucket"
   enable_versioning = true
   force_destroy     = true
+  environment       = var.environment
 }
 
 module "dynamodb_documents_metadata" {
@@ -54,4 +55,5 @@ module "documents_process_lambda" {
   function_name    = "document_processor"
   runtime          = "python3.9"
   handler_function = "lambda_handler"
+  environment      = var.environment
 }
