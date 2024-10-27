@@ -26,3 +26,16 @@ module "s3_pdf_storage" {
   enable_versioning = true
   force_destroy     = true
 }
+
+module "dynamodb_pdf_metadata" {
+  source = "./modules/dynamodb"
+
+  table_name = "Learnd_PDF_Metadata"
+  hash_key   = "ID"
+
+  attributes = [
+    { name = "ID", type = "S" },
+  ]
+
+  global_secondary_indexes = []
+}
