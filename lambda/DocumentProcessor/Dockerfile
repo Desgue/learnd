@@ -1,8 +1,8 @@
-FROM public.ecr.aws/lambda/python:3.9
+FROM public.ecr.aws/lambda/python:3.12
 
 COPY requirements.txt ./
 
-RUN python3.9 -m pip install -r requirements.txt -t .
+RUN python -m pip install -r requirements.txt -t .
 
 COPY processor.py ./
 
