@@ -121,8 +121,6 @@ Terraform provides multiple ways to set variables, which are read in the followi
 
 ## Setup Instructions
 
-## Setup Instructions
-
 ### 1. Lambda Function Setup
 Navigate to the `lambda/DocumentProcessor` directory and:
 
