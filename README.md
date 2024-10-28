@@ -64,12 +64,32 @@ This project sets up a serverless document processing infrastructure on AWS usin
 Terraform provides multiple ways to set variables, which are read in the following order (later sources take precedence):
 
 1. **Environment Variables**:
+
+   Linux/macOS:
    ```bash
    export TF_VAR_AWS_ACCESS_KEY_ID="your-access-key"
    export TF_VAR_AWS_SECRET_ACCESS_KEY="your-secret-key"
    export TF_VAR_AWS_REGION="your-region"
    export TF_VAR_environment="dev"
    export TF_VAR_ecr_namespace="your-account-id.dkr.ecr.region.amazonaws.com"
+   ```
+
+   Windows (Command Prompt):
+   ```cmd
+   set TF_VAR_AWS_ACCESS_KEY_ID=your-access-key
+   set TF_VAR_AWS_SECRET_ACCESS_KEY=your-secret-key
+   set TF_VAR_AWS_REGION=your-region
+   set TF_VAR_environment=dev
+   set TF_VAR_ecr_namespace=your-account-id.dkr.ecr.region.amazonaws.com
+   ```
+
+   Windows (PowerShell):
+   ```powershell
+   $env:TF_VAR_AWS_ACCESS_KEY_ID="your-access-key"
+   $env:TF_VAR_AWS_SECRET_ACCESS_KEY="your-secret-key"
+   $env:TF_VAR_AWS_REGION="your-region"
+   $env:TF_VAR_environment="dev"
+   $env:TF_VAR_ecr_namespace="your-account-id.dkr.ecr.region.amazonaws.com"
    ```
 
 2. **Variable Files**: Create a `terraform.tfvars` file:
@@ -101,14 +121,31 @@ Terraform provides multiple ways to set variables, which are read in the followi
 
 ## Setup Instructions
 
+## Setup Instructions
+
 ### 1. Lambda Function Setup
 Navigate to the `lambda/DocumentProcessor` directory and:
 
 1. Set required environment variables:
+
+   Linux/macOS:
    ```bash
    export AWS_REGION="your-region"
    export ECR_REPOSITORY="your-account-id.dkr.ecr.region.amazonaws.com/namespace/repository-name"
    ```
+
+   Windows (Command Prompt):
+   ```cmd
+   set AWS_REGION=your-region
+   set ECR_REPOSITORY=your-account-id.dkr.ecr.region.amazonaws.com/namespace/repository-name
+   ```
+
+   Windows (PowerShell):
+   ```powershell
+   $env:AWS_REGION="your-region"
+   $env:ECR_REPOSITORY="your-account-id.dkr.ecr.region.amazonaws.com/namespace/repository-name"
+   ```
+
 
 2. Build and push the Lambda container:
    ```bash
