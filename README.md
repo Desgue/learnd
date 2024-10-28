@@ -1,4 +1,6 @@
 # Document Processing Infrastructure Documentation
+### Summary
+This project implements a scalable, serverless document processing infrastructure deployed on AWS Cloud. The architecture leverages key AWS services to create an automated pipeline for document handling and metadata management. Using S3 as the storage layer, the system automatically triggers Lambda functions whenever documents are uploaded or deleted, processing these documents and storing their metadata in DynamoDB. The entire infrastructure is defined as code using Terraform, enabling consistent and repeatable deployments across different environments.
 
 ## Table of Contents
 1. [Overview](#overview)
