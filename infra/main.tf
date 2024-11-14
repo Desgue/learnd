@@ -7,8 +7,12 @@ terraform {
 
   }
 
-  backend "local" {
-    path = "terraform.tfstate"
+  backend "s3" {
+    bucket         = "learnd-terraform-state"
+    key            = "dev/terraform.tfstate"
+    region         = "eu-west-2"
+    dynamodb_table = "terraform-state-lock-dynamo"
+    encrypt        = true
   }
 }
 
